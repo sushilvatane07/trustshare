@@ -17,26 +17,17 @@ from supabase_client import supabase
 
 app = FastAPI(title="TrustShare Enterprise Backend", version="3.1.0")
 
-allowed_origins_env = os.environ.get("ALLOWED_ORIGINS", "")
-if allowed_origins_env:
-    origins = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
-    allow_origin_regex = None
-else:
-    # Default fallback for development
-    origins = [
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:8000",
         "http://127.0.0.1:8000",
         "http://localhost:3000",
         "https://sushilvatane07.github.io",
-    ]
-    allow_origin_regex = r"https?://.*"
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_origin_regex=allow_origin_regex,
+    ],
+    allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

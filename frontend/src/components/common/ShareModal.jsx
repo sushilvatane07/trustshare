@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../../lib/SupabaseClient";
+import { fetchWithTimeout } from "../../lib/apiClient";
 import { LinkIcon, CopyIcon, CheckIcon } from "../Icons";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -41,7 +42,7 @@ export default function ShareModal({ file, session, onClose, onLinkCreated }) {
     }
     const maxDl = maxDownloads ? parseInt(maxDownloads, 10) : null;
 
-    // 1. Primary: Try FastAPI backend endpoint
+    // 1. Primary: Try FastAPI backend (uses ?token= param to bypass Cloudflare header stripping)
     try {
       const payload = {
         file_id: file.id,
@@ -49,14 +50,18 @@ export default function ShareModal({ file, session, onClose, onLinkCreated }) {
         max_downloads: maxDl,
       };
 
-      const res = await fetch(`${API_URL}/share`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+      const res = await fetchWithTimeout(
+        `${API_URL}/share`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      }).catch(() => null);
+        10000
+      );
 
       if (res && res.ok) {
         const data = await res.json();
@@ -68,10 +73,10 @@ export default function ShareModal({ file, session, onClose, onLinkCreated }) {
         return;
       }
     } catch (fetchErr) {
-      console.log("FastAPI backend notice, using direct Supabase share_links fallback...", fetchErr);
+      console.warn("FastAPI /share failed, trying Supabase fallback...", fetchErr);
     }
 
-    // 2. Fallback: Direct Supabase share_links or shared_links table insert
+    // 2. Fallback: Direct Supabase share_links insert
     try {
       const shareRecord = {
         file_id: file.id,
@@ -84,12 +89,7 @@ export default function ShareModal({ file, session, onClose, onLinkCreated }) {
         revoked: false,
       };
 
-      let sbError = null;
-      const { error: err1 } = await supabase.from("share_links").insert([shareRecord]);
-      if (err1) {
-        const { error: err2 } = await supabase.from("shared_links").insert([shareRecord]);
-        sbError = err2;
-      }
+      const { error: sbError } = await supabase.from("share_links").insert([shareRecord]);
 
       if (sbError) {
         throw new Error(sbError.message || "Database rejected share link insertion.");
@@ -99,7 +99,7 @@ export default function ShareModal({ file, session, onClose, onLinkCreated }) {
       setGeneratedLink(fullUrl);
       if (onLinkCreated) onLinkCreated();
     } catch (err) {
-      setError(err.message || "Failed to generate share link");
+      setError(err.message || "Failed to generate share link.");
     } finally {
       setLoading(false);
     }

@@ -15,9 +15,9 @@ import {
   MoonIcon,
   SparklesIcon,
   ChevronDownIcon,
-  CheckCircleIcon,
   KeyIcon,
 } from "../components/Icons";
+import { useTheme } from "../context/ThemeContext";
 import "../styles/start.css";
 import hero from "../assets/hero.png";
 
@@ -201,30 +201,11 @@ function CyberVault3DCanvas() {
 }
 
 
-  const cardRef = useRef(null);
-
-  const handleMouseMove = (e) => {
-    const card = cardRef.current;
-    if (!card) return;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotateX = ((y - centerY) / centerY) * -8;
-    const rotateY = ((x - centerX) / centerX) * 8;
-
-    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-  };
-
   const handleMouseLeave = () => {
     const card = cardRef.current;
     if (!card) return;
     card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
   };
-
-
 
 function VaultSimulator3D() {
   const [inputText, setInputText] = useState("Quarterly_Financial_Report.pdf");
@@ -308,16 +289,8 @@ function FAQAccordion() {
   );
 }
 
-export default function Start({ onGetStarted, onSignIn }) {
-  const [themeMode, setThemeMode] = useState("light");
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", themeMode);
-  }, [themeMode]);
-
-  function toggleTheme() {
-    setThemeMode((prev) => (prev === "dark" ? "light" : "dark"));
-  }
+export default function LandingPage({ onGetStarted, onSignIn }) {
+  const { themeMode, toggleTheme } = useTheme();
 
   return (
     <div className={`ts-page dark-3d-theme ${themeMode}-mode`}>
@@ -353,7 +326,7 @@ export default function Start({ onGetStarted, onSignIn }) {
               <span className="theme-label">{themeMode === "dark" ? "Light" : "Dark"}</span>
             </button>
 
-            <button className="ts-link-btn" onClick={onGetStarted}>
+            <button className="ts-link-btn" onClick={onSignIn || onGetStarted}>
               Sign In
             </button>
             <button className="ts-btn ts-btn-primary" onClick={onGetStarted}>
@@ -385,13 +358,13 @@ export default function Start({ onGetStarted, onSignIn }) {
               <button className="ts-btn ts-btn-primary ts-btn-lg" onClick={onGetStarted}>
                 Get Started Free <ArrowRightIcon size={16} />
               </button>
-              <button className="ts-btn ts-btn-outline ts-btn-lg" onClick={onGetStarted}>
+              <button className="ts-btn ts-btn-outline ts-btn-lg" onClick={onSignIn || onGetStarted}>
                 Sign In
               </button>
             </div>
             <p className="ts-signin-hint">
               Already registered?{" "}
-              <button className="ts-inline-link" onClick={onSignIn}>
+              <button className="ts-inline-link" onClick={onSignIn || onGetStarted}>
                 Sign in to your vault <ArrowRightIcon size={14} />
               </button>
             </p>
@@ -400,12 +373,7 @@ export default function Start({ onGetStarted, onSignIn }) {
           {/* 3D Hero Preview */}
           <div className="hero-3d-wrapper">
             <CyberVault3DCanvas />
-            <TiltCard className="dash-preview-card">
-              <img src={hero} className="dash-card-img" alt="TrustShare Dashboard Preview" />
-              <div className="card-glass-badge">
-                <span className="live-dot" /> Live Vault Engine Active
-              </div>
-            </TiltCard>
+          
           </div>
         </div>
       </section>
@@ -449,21 +417,7 @@ export default function Start({ onGetStarted, onSignIn }) {
           <h2>Built For Enterprise Grade Security</h2>
         </div>
         <div className="ts-feature-strip-inner bento-grid">
-          {FEATURES.map((f) => {
-            const IconComp = f.icon;
-            return (
-              <TiltCard key={f.title} className="feature-item-card bento-card">
-                <div className="bento-card-top flex-between">
-                  <span className="feature-icon">
-                    <IconComp size={22} />
-                  </span>
-                  <span className="bento-badge">{f.badge}</span>
-                </div>
-                <span className="feature-title">{f.title}</span>
-                <span className="feature-text">{f.text}</span>
-              </TiltCard>
-            );
-          })}
+          
         </div>
       </section>
 

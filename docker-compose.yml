@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      # Comma-separated list of allowed origins. Exclude or configure in production.
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost,http://localhost:5173,https://sushilvatane07.github.io}
+    volumes:
+      - backend-uploads:/app/uploads
+      - backend-encrypted:/app/encrypted
+      - backend-decrypted:/app/decrypted
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+        - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  backend-uploads:
+  backend-encrypted:
+  backend-decrypted:

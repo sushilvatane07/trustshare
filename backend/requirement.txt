@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+cryptography
+supabase
+python-dotenv
+python-multipart

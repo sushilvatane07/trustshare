@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { supabase } from "../lib/SupabaseClient";
-import { ShieldIcon, ShieldCheckIcon, LockIcon, EyeIcon, EyeOffIcon, ArrowRightIcon } from "./Icons";
+import { ShieldIcon, ShieldCheckIcon, EyeIcon, EyeOffIcon } from "../components/Icons";
 
-export default function AuthForm({ onBackToLanding }) {
-  const [mode, setMode] = useState("signin");
+export default function AuthPage({ onBackToLanding, initialMode = "signin" }) {
+  const [mode, setMode] = useState(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -60,7 +60,7 @@ export default function AuthForm({ onBackToLanding }) {
     if (error) {
       setMessage({ type: "error", text: error.message });
     } else {
-      setMessage({ type: "success", text: "Magic link sent! Check your email inbox." });
+      setMessage({ type: "success", text: "Magic OTP link sent! Check your email inbox." });
     }
   }
 

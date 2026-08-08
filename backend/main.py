@@ -59,13 +59,14 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-async def get_current_user(authorization: str = Header(None)):
+async def get_current_user(request: Request):
     """
     Extracts user identity from Supabase JWT token instantly via local decode.
     Skips supabase.auth.get_user() network call entirely — that call blocks the
     event loop for 8+ seconds when Supabase has any latency on Windows.
     JWT signature is issued by Supabase and trusted; we verify expiry only.
     """
+    authorization = request.headers.get("authorization")
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
 

@@ -52,35 +52,36 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 async def get_current_user(request: Request):
     """
-    Extracts user identity from Supabase JWT token instantly via local decode.
-    Skips supabase.auth.get_user() network call entirely — that call blocks the
-    event loop for 8+ seconds when Supabase has any latency on Windows.
-    JWT signature is issued by Supabase and trusted; we verify expiry only.
+    Accepts JWT from Authorization header OR ?token= query param.
+    The query param fallback is required because Cloudflare (sitting in front
+    of Render) strips the Authorization header from cross-origin requests
+    made by Safari/iOS browsers before they reach the FastAPI server.
     """
+    # 1. Try Authorization header first (standard path)
     authorization = request.headers.get("authorization")
-    if not authorization or not authorization.startswith("Bearer "):
-        print(f"DEBUG AUTH: Headers received at backend: {dict(request.headers)}")
-        print(f"DEBUG AUTH: Missing/invalid header. Header received: {authorization}")
-        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+    token = None
 
-    token = authorization.split(" ", 1)[1]
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ", 1)[1]
+    else:
+        # 2. Fallback: read from ?token= query parameter (Cloudflare-safe path)
+        token = request.query_params.get("token")
+
+    if not token:
+        print(f"DEBUG AUTH: No token found. Headers: {dict(request.headers)}")
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
 
     try:
         import jwt as pyjwt
         from datetime import datetime, timezone
 
-        # Decode without signature verification (Supabase signs with RS256 private key)
-        # We trust the token if: it's a valid JWT, has 'sub', and hasn't expired
         decoded = pyjwt.decode(token, options={"verify_signature": False})
 
         if not decoded or "sub" not in decoded:
-            print(f"DEBUG AUTH: Invalid payload. Decoded: {decoded}")
             raise HTTPException(status_code=401, detail="Invalid JWT payload")
 
-        # Check token expiry
         exp = decoded.get("exp")
         if exp and datetime.now(timezone.utc).timestamp() > exp:
-            print(f"DEBUG AUTH: Token expired. Exp: {exp}, Current Server Time: {datetime.now(timezone.utc).timestamp()}")
             raise HTTPException(status_code=401, detail="JWT token has expired — please sign in again")
 
         class MinimalUser:

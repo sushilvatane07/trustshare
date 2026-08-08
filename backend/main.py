@@ -68,6 +68,7 @@ async def get_current_user(request: Request):
     """
     authorization = request.headers.get("authorization")
     if not authorization or not authorization.startswith("Bearer "):
+        print(f"DEBUG AUTH: Missing/invalid header. Header received: {authorization}")
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
 
     token = authorization.split(" ", 1)[1]
@@ -81,11 +82,13 @@ async def get_current_user(request: Request):
         decoded = pyjwt.decode(token, options={"verify_signature": False})
 
         if not decoded or "sub" not in decoded:
+            print(f"DEBUG AUTH: Invalid payload. Decoded: {decoded}")
             raise HTTPException(status_code=401, detail="Invalid JWT payload")
 
         # Check token expiry
         exp = decoded.get("exp")
         if exp and datetime.now(timezone.utc).timestamp() > exp:
+            print(f"DEBUG AUTH: Token expired. Exp: {exp}, Current Server Time: {datetime.now(timezone.utc).timestamp()}")
             raise HTTPException(status_code=401, detail="JWT token has expired — please sign in again")
 
         class MinimalUser:
@@ -103,7 +106,7 @@ async def get_current_user(request: Request):
     except HTTPException:
         raise
     except Exception as e:
-        print("JWT decode error:", e)
+        print(f"DEBUG AUTH: JWT decode error: {e}")
         raise HTTPException(status_code=401, detail="Invalid or malformed token")
 
 

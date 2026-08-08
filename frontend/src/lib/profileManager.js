@@ -37,6 +37,7 @@ export async function saveUserProfile(user, newUsername, newAvatarUrl) {
   // 1. Update via FastAPI backend (service_role key → bypasses RLS)
   if (token) {
     try {
+      console.log(`[PROFILE MANAGER] PUT /profile with token: Bearer ${token ? token.substring(0, 15) + "..." : "null"}`);
       const res = await fetch(`${API_URL}/profile`, {
         method: "PUT",
         headers: {

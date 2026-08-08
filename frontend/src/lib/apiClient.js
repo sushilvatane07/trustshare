@@ -7,6 +7,8 @@ export async function fetchWithTimeout(resource, options = {}, timeoutMs = 8000)
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
 
+  console.log(`[API CLIENT] Fetching ${resource} with headers:`, options.headers);
+
   try {
     const response = await fetch(resource, {
       ...options,

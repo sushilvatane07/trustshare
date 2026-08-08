@@ -59,6 +59,7 @@ async def get_current_user(request: Request):
     """
     authorization = request.headers.get("authorization")
     if not authorization or not authorization.startswith("Bearer "):
+        print(f"DEBUG AUTH: Headers received at backend: {dict(request.headers)}")
         print(f"DEBUG AUTH: Missing/invalid header. Header received: {authorization}")
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
 
